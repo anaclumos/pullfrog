@@ -19,7 +19,7 @@ import {
   createProcessOutputActivityTimeout,
   DEFAULT_ACTIVITY_CHECK_INTERVAL_MS,
 } from "./utils/activity.ts";
-import { resolveAgent, resolveModel } from "./utils/agent.ts";
+import { mayRunCodexHarness, resolveAgent, resolveModel } from "./utils/agent.ts";
 import {
   buildRejectedCredentialError,
   NoUsableCredentialError,
@@ -272,10 +272,9 @@ export async function main(): Promise<MainResult> {
   // would read a subscription-only account as unable to run its own models
   // and fall the run back to the free tier.
   await selectCodexAuth({
-    requireIdToken:
-      runContext.repoSettings.codexAgent ||
-      payload.codexArm === true ||
-      process.env.PULLFROG_AGENT?.trim() === "codex",
+    requireIdToken: mayRunCodexHarness({
+      codexAgent: runContext.repoSettings.codexAgent || payload.codexArm === true,
+    }),
   });
   installCodexAuth();
   installXaiAuth();
