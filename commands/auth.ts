@@ -133,6 +133,7 @@ function printCodexUsage(params: { stream: typeof console.log; prog: string }): 
   params.stream("");
   params.stream("options:");
   params.stream("  --org OWNER | --repo OWNER/REPO   select the credential scope");
+  params.stream("  --slot N   save an extra subscription as CODEX_AUTH_JSON_N (N is 2 or more)");
   params.stream("  -h, --help   show help");
 }
 
@@ -191,6 +192,7 @@ function parseCodexArgs(args: string[]) {
   return arg(
     {
       ...scopeArgs,
+      "--slot": Number,
     },
     { argv: args }
   );
@@ -213,7 +215,14 @@ async function runCodex(params: CodexCliParams): Promise<void> {
   }
 
   if (parsed._.length) throw new Error("unexpected auth argument");
-  await runCodexAuth(parsed);
+  const slot = parsed["--slot"];
+  if (slot !== undefined && !(Number.isInteger(slot) && slot >= 2)) {
+    throw new Error("--slot must be an integer of 2 or more");
+  }
+  await runCodexAuth(
+    parsed,
+    slot === undefined ? CODEX_AUTH_SECRET : `${CODEX_AUTH_SECRET}_${slot}`
+  );
 }
 
 /** checked before the sign-in, so nobody completes a device flow for a save that cannot land.
@@ -233,7 +242,10 @@ function refuseWhenRepoCopiesShadow(params: {
   bail("nothing saved.");
 }
 
-async function runCodexAuth(parsed: ReturnType<typeof parseCodexArgs>): Promise<void> {
+async function runCodexAuth(
+  parsed: ReturnType<typeof parseCodexArgs>,
+  name: string
+): Promise<void> {
   p.intro(pc.bgGreen(pc.black(" pullfrog auth codex ")));
 
   const spin = p.spinner();
@@ -295,11 +307,11 @@ async function runCodexAuth(parsed: ReturnType<typeof parseCodexArgs>): Promise<
           : "org owner required to change secrets"
       );
 
-    refuseWhenRepoCopiesShadow({ access, owner: remote.owner, name: CODEX_AUTH_SECRET });
+    refuseWhenRepoCopiesShadow({ access, owner: remote.owner, name });
 
-    if (access.secrets.includes(CODEX_AUTH_SECRET)) {
+    if (access.secrets.includes(name)) {
       const overwrite = await p.select({
-        message: `${pc.cyan(CODEX_AUTH_SECRET)} is already configured — overwrite?`,
+        message: `${pc.cyan(name)} is already configured — overwrite?`,
         options: [
           { value: true, label: "overwrite", hint: "rotate to a freshly minted credential" },
           { value: false, label: "cancel" },
@@ -395,12 +407,12 @@ async function runCodexAuth(parsed: ReturnType<typeof parseCodexArgs>): Promise<
     }
 
     const target = describeSecretTarget({ owner: remote.owner, repo: remote.repo, scope });
-    spin.start(`saving ${pc.cyan(CODEX_AUTH_SECRET)} to ${target}`);
+    spin.start(`saving ${pc.cyan(name)} to ${target}`);
     const result = await setPullfrogSecret({
       token,
       owner: remote.owner,
       repo: remote.repo,
-      name: CODEX_AUTH_SECRET,
+      name,
       value: savable.json,
       scope,
     });
@@ -411,7 +423,7 @@ async function runCodexAuth(parsed: ReturnType<typeof parseCodexArgs>): Promise<
       );
       process.exit(1);
     }
-    spin.stop(`saved ${pc.cyan(CODEX_AUTH_SECRET)} to ${target}`);
+    spin.stop(`saved ${pc.cyan(name)} to ${target}`);
     setActiveSpin(null);
     p.outro("done.");
   } catch (error) {
