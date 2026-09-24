@@ -98,6 +98,11 @@ use auth codex, auth claude or auth grok for subscription credentials.`);
       const refusal = shadowRefusal({ overrides: data.overrides, owner: target.owner, name });
       if (refusal) throw new Error(refusal);
     }
+    const slot = names.find((name) => name.startsWith(`${CODEX_AUTH_SECRET}_`));
+    if (slot && ![...names, ...data.secrets, ...data.inherited].includes(CODEX_AUTH_SECRET))
+      throw new Error(
+        `${slot} adds to ${CODEX_AUTH_SECRET}, which is not saved here. save ${CODEX_AUTH_SECRET} first.`
+      );
     const secrets: { name: string; value: string }[] = [];
     for (const name of names) {
       const value =
