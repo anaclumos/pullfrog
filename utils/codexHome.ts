@@ -361,7 +361,7 @@ export function codexQuota(usage: CodexUsage): CodexQuota {
 
 async function probeCodexQuota(raw: string): Promise<CodexQuota> {
   const body = parseCodexAuthBody(raw);
-  if (!body || body.refresh_rejected_at) return "unusable";
+  if (!body || body.refresh_rejected_at || !body.tokens.id_token) return "unusable";
   try {
     const response = await fetch(CODEX_USAGE_URL, {
       headers: {

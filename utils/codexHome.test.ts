@@ -62,6 +62,14 @@ function rejectedBlob(id: string): string {
   });
 }
 
+function blobWithoutIdToken(id: string): string {
+  return JSON.stringify({
+    auth_mode: "chatgpt",
+    tokens: { access_token: `at_${id}`, refresh_token: `rt_${id}`, account_id: `acc_${id}` },
+    last_refresh: "2026-09-01T00:00:00.000Z",
+  });
+}
+
 describe("codexQuota", () => {
   it("reads an account under its limits as available", () => {
     expect(codexQuota(usage({}))).toBe("available");
@@ -98,10 +106,12 @@ describe("selectCodexAuth", () => {
     process.env.CODEX_AUTH_JSON = rejectedBlob("primary");
     process.env.CODEX_AUTH_JSON_2 = rejectedBlob("two");
     process.env.CODEX_AUTH_JSON_3 = "not json";
+    process.env.CODEX_AUTH_JSON_4 = blobWithoutIdToken("four");
     await selectCodexAuth();
     expect(process.env.CODEX_AUTH_JSON).toBe(rejectedBlob("primary"));
     expect(process.env.CODEX_AUTH_JSON_2).toBeUndefined();
     expect(process.env.CODEX_AUTH_JSON_3).toBeUndefined();
+    expect(process.env.CODEX_AUTH_JSON_4).toBeUndefined();
   });
 
   it("orders slots numerically when there is no primary", async () => {
