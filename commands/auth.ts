@@ -307,6 +307,17 @@ async function runCodexAuth(
           : "org owner required to change secrets"
       );
 
+    if (
+      name !== CODEX_AUTH_SECRET &&
+      !access.secrets.includes(CODEX_AUTH_SECRET) &&
+      !access.inherited.includes(CODEX_AUTH_SECRET)
+    ) {
+      bail(
+        `${pc.cyan(name)} adds to ${pc.cyan(CODEX_AUTH_SECRET)}, which is not saved here. ` +
+          `run ${pc.cyan(`${process.env.PULLFROG_BIN_NAME || "pullfrog"} auth codex`)} first.`
+      );
+    }
+
     refuseWhenRepoCopiesShadow({ access, owner: remote.owner, name });
 
     if (access.secrets.includes(name)) {
@@ -324,6 +335,7 @@ async function runCodexAuth(
       }
     }
 
+    const slotFlag = parsed["--slot"] === undefined ? "" : ` --slot ${parsed["--slot"]}`;
     p.log.info(
       [
         `signing in via Codex device authorization. open the URL Codex prints`,
@@ -331,7 +343,7 @@ async function runCodexAuth(
         ``,
         `${pc.dim("note:")} if your ChatGPT account doesn't have device-code auth enabled,`,
         `Codex will exit early. enable it at ${pc.cyan(`https://chatgpt.com/#settings/Security`)}`,
-        `then re-run ${pc.cyan(`${process.env.PULLFROG_BIN_NAME || "pullfrog"} auth codex`)}.`,
+        `then re-run ${pc.cyan(`${process.env.PULLFROG_BIN_NAME || "pullfrog"} auth codex${slotFlag}`)}.`,
       ].join("\n")
     );
 

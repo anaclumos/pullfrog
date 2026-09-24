@@ -369,9 +369,10 @@ export function pickCodexSlot<T extends { quota: CodexQuota }>(slots: T[]): T {
   );
 }
 
-async function probeCodexQuota(raw: string): Promise<CodexQuota> {
+async function probeCodexQuota(raw: string, requireIdToken: boolean): Promise<CodexQuota> {
   const body = parseCodexAuthBody(raw);
-  if (!body || body.refresh_rejected_at || !body.tokens.id_token) return "unusable";
+  if (!body || body.refresh_rejected_at) return "unusable";
+  if (requireIdToken && !body.tokens.id_token) return "unusable";
   try {
     const response = await fetch(CODEX_USAGE_URL, {
       headers: {
@@ -387,7 +388,7 @@ async function probeCodexQuota(raw: string): Promise<CodexQuota> {
   }
 }
 
-export async function selectCodexAuth(): Promise<void> {
+export async function selectCodexAuth(params: { requireIdToken: boolean }): Promise<void> {
   const slots = Object.keys(process.env)
     .filter((name) => name.startsWith(`${CODEX_AUTH_ENV}_`))
     .sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
@@ -397,7 +398,7 @@ export async function selectCodexAuth(): Promise<void> {
   const probed = await Promise.all(
     names.map(async (name) => {
       const raw = process.env[name] ?? "";
-      return { name, raw, quota: await probeCodexQuota(raw) };
+      return { name, raw, quota: await probeCodexQuota(raw, params.requireIdToken) };
     })
   );
   const chosen = pickCodexSlot(probed);

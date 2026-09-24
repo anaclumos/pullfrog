@@ -132,7 +132,7 @@ describe("selectCodexAuth", () => {
     process.env.CODEX_AUTH_JSON_2 = rejectedBlob("two");
     process.env.CODEX_AUTH_JSON_3 = "not json";
     process.env.CODEX_AUTH_JSON_4 = blobWithoutIdToken("four");
-    await selectCodexAuth();
+    await selectCodexAuth({ requireIdToken: true });
     expect(process.env.CODEX_AUTH_JSON).toBe(rejectedBlob("primary"));
     expect(process.env.CODEX_AUTH_JSON_2).toBeUndefined();
     expect(process.env.CODEX_AUTH_JSON_3).toBeUndefined();
@@ -142,7 +142,7 @@ describe("selectCodexAuth", () => {
   it("orders slots numerically when there is no primary", async () => {
     process.env.CODEX_AUTH_JSON_10 = rejectedBlob("ten");
     process.env.CODEX_AUTH_JSON_2 = rejectedBlob("two");
-    await selectCodexAuth();
+    await selectCodexAuth({ requireIdToken: true });
     expect(process.env.CODEX_AUTH_JSON).toBe(rejectedBlob("two"));
     expect(process.env.CODEX_AUTH_JSON_10).toBeUndefined();
     expect(process.env.CODEX_AUTH_JSON_2).toBeUndefined();

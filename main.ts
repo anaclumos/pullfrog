@@ -271,7 +271,12 @@ export async function main(): Promise<MainResult> {
   // without the Grok credential on disk and 12 with it, so skipping this
   // would read a subscription-only account as unable to run its own models
   // and fall the run back to the free tier.
-  await selectCodexAuth();
+  await selectCodexAuth({
+    requireIdToken:
+      runContext.repoSettings.codexAgent ||
+      payload.codexArm === true ||
+      process.env.PULLFROG_AGENT?.trim() === "codex",
+  });
   installCodexAuth();
   installXaiAuth();
 
