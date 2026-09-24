@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { codexQuota, selectCodexAuth } from "./codexHome.ts";
+import { type CodexQuota, codexQuota, pickCodexSlot, selectCodexAuth } from "./codexHome.ts";
 
 const savedEnv = { ...process.env };
 
@@ -106,6 +106,23 @@ describe("codexQuota", () => {
 
   it("reads a payload with no rate limit block as available", () => {
     expect(codexQuota(JSON.parse('{"plan_type":"enterprise"}'))).toBe("available");
+  });
+});
+
+describe("pickCodexSlot", () => {
+  const slots = (...quotas: CodexQuota[]) =>
+    quotas.map((quota, index) => ({ name: `slot-${index}`, quota }));
+
+  it("prefers free quota, then credits, then an unanswered probe", () => {
+    expect(pickCodexSlot(slots("exhausted", "unknown", "credits", "available")).name).toBe(
+      "slot-3"
+    );
+    expect(pickCodexSlot(slots("unusable", "unknown", "credits")).name).toBe("slot-2");
+    expect(pickCodexSlot(slots("unusable", "exhausted", "unknown")).name).toBe("slot-2");
+  });
+
+  it("keeps slot order between equal ranks", () => {
+    expect(pickCodexSlot(slots("exhausted", "available", "available")).name).toBe("slot-1");
   });
 });
 

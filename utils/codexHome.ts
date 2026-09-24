@@ -361,6 +361,14 @@ export function codexQuota(usage: CodexUsage): CodexQuota {
   return usage.credits?.has_credits || usage.credits?.unlimited ? "credits" : "exhausted";
 }
 
+export function pickCodexSlot<T extends { quota: CodexQuota }>(slots: T[]): T {
+  return slots.reduce((best, slot) =>
+    CODEX_QUOTA_PREFERENCE.indexOf(slot.quota) < CODEX_QUOTA_PREFERENCE.indexOf(best.quota)
+      ? slot
+      : best
+  );
+}
+
 async function probeCodexQuota(raw: string): Promise<CodexQuota> {
   const body = parseCodexAuthBody(raw);
   if (!body || body.refresh_rejected_at || !body.tokens.id_token) return "unusable";
@@ -392,11 +400,7 @@ export async function selectCodexAuth(): Promise<void> {
       return { name, raw, quota: await probeCodexQuota(raw) };
     })
   );
-  const chosen = probed.reduce((best, slot) =>
-    CODEX_QUOTA_PREFERENCE.indexOf(slot.quota) < CODEX_QUOTA_PREFERENCE.indexOf(best.quota)
-      ? slot
-      : best
-  );
+  const chosen = pickCodexSlot(probed);
 
   process.env[CODEX_AUTH_ENV] = chosen.raw;
   for (const slot of slots) delete process.env[slot];
