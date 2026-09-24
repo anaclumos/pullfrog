@@ -336,8 +336,8 @@ const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 
 const CODEX_QUOTA_PREFERENCE = [
   "available",
-  "unknown",
   "credits",
+  "unknown",
   "exhausted",
   "unusable",
 ] as const;
@@ -348,9 +348,11 @@ export interface CodexUsage {
   rate_limit?: { allowed?: boolean; limit_reached?: boolean } | null;
   rate_limit_reached_type?: unknown;
   credits?: { has_credits?: boolean; unlimited?: boolean } | null;
+  spend_control?: { reached?: boolean } | null;
 }
 
 export function codexQuota(usage: CodexUsage): CodexQuota {
+  if (usage.spend_control?.reached) return "exhausted";
   const reached =
     usage.rate_limit?.allowed === false ||
     usage.rate_limit?.limit_reached === true ||

@@ -629,9 +629,9 @@ function printGrokUsage(params: { stream: typeof console.log; prog: string }): v
 }
 
 async function runGrok(params: GrokCliParams): Promise<void> {
-  let parsed: ReturnType<typeof parseCodexArgs>;
+  let parsed: ReturnType<typeof parseClaudeArgs>;
   try {
-    parsed = parseCodexArgs(params.args);
+    parsed = parseClaudeArgs(params.args);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`${message}\n`);

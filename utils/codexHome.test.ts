@@ -96,6 +96,14 @@ describe("codexQuota", () => {
     expect(codexQuota(body)).toBe("exhausted");
   });
 
+  it("reads a reached spend cap as exhausted even with credits and an open rate limit", () => {
+    const body = usage({
+      credits: { has_credits: true, unlimited: false, balance: "12.5" },
+      spend_control: { reached: true },
+    });
+    expect(codexQuota(body)).toBe("exhausted");
+  });
+
   it("reads a payload with no rate limit block as available", () => {
     expect(codexQuota(JSON.parse('{"plan_type":"enterprise"}'))).toBe("available");
   });
