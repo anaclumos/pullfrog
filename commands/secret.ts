@@ -9,7 +9,7 @@ import {
   scopeArgs,
   targetName,
 } from "./_configuration.ts";
-import { SUBSCRIPTION_SECRET_NAMES, shadowRefusal } from "./_shared.ts";
+import { CODEX_AUTH_SECRET, SUBSCRIPTION_SECRET_NAMES, shadowRefusal } from "./_shared.ts";
 
 export const secretNamesSchema = z.object({
   target: z.string(),
@@ -90,7 +90,11 @@ use auth codex, auth claude or auth grok for subscription credentials.`);
       throw new Error("use --file PATH or --file - without a terminal");
     // the other door to the same account-level write `auth` guards. checked before any value
     // is prompted for, so nobody types a credential that would land in a shadow.
-    for (const name of names.filter((secret) => SUBSCRIPTION_SECRET_NAMES.includes(secret))) {
+    const guarded = names.filter(
+      (secret) =>
+        SUBSCRIPTION_SECRET_NAMES.includes(secret) || secret.startsWith(`${CODEX_AUTH_SECRET}_`)
+    );
+    for (const name of guarded) {
       const refusal = shadowRefusal({ overrides: data.overrides, owner: target.owner, name });
       if (refusal) throw new Error(refusal);
     }

@@ -216,7 +216,7 @@ async function runCodex(params: CodexCliParams): Promise<void> {
 
   if (parsed._.length) throw new Error("unexpected auth argument");
   const slot = parsed["--slot"];
-  if (slot !== undefined && !(Number.isInteger(slot) && slot >= 2)) {
+  if (slot !== undefined && !(Number.isSafeInteger(slot) && slot >= 2)) {
     throw new Error("--slot must be an integer of 2 or more");
   }
   await runCodexAuth(

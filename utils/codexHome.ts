@@ -93,7 +93,7 @@ type OpenCodeAuthFile = Record<string, OpenCodeOAuthEntry>;
 function isRejectedChain(body: CodexAuthBody): boolean {
   if (!body.refresh_rejected_at) return false;
   log.warning(
-    `» ${CODEX_AUTH_ENV} was rejected by OpenAI at ${body.refresh_rejected_at} and cannot be ` +
+    `» ${selectedCodexSecret} was rejected by OpenAI at ${body.refresh_rejected_at} and cannot be ` +
       `refreshed — re-run \`npx pullfrog auth codex\`. skipping it for this run.`
   );
   return true;
@@ -133,7 +133,7 @@ export function installCodexAuth(): InstalledCodexAuth | null {
 
   const body = parseCodexAuthBody(raw);
   if (!body) {
-    log.warning(`» ${CODEX_AUTH_ENV} present but malformed; ignoring`);
+    log.warning(`» ${selectedCodexSecret} present but malformed; ignoring`);
     return null;
   }
   if (isRejectedChain(body)) return null;
@@ -304,13 +304,13 @@ export function installCodexHome(): InstalledCodexHome | null {
 
   const body = parseCodexAuthBody(raw);
   if (!body) {
-    log.warning(`» ${CODEX_AUTH_ENV} present but malformed; ignoring`);
+    log.warning(`» ${selectedCodexSecret} present but malformed; ignoring`);
     return null;
   }
   if (isRejectedChain(body)) return null;
   if (!body.tokens.id_token) {
     log.warning(
-      `» ${CODEX_AUTH_ENV} carries no id_token — the codex CLI cannot load it. ` +
+      `» ${selectedCodexSecret} carries no id_token — the codex CLI cannot load it. ` +
         `re-run \`npx pullfrog auth codex\` to mint a complete credential.`
     );
     return null;
